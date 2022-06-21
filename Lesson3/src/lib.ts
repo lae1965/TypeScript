@@ -5,7 +5,7 @@ export interface Message {
 
 export interface Action {
   name: string;
-  handler: Function;
+  handler(): void;
 }
 
 export function renderBlock(elementId: string, html: string): void {

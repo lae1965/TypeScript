@@ -1,4 +1,4 @@
-import { renderEmptyOrErrorSearchBlock, renderSearchResultsBlock } from "./search-results.js";
+import { renderEmptyOrErrorSearchBlock, renderSearchResultsBlock } from './search-results.js';
 
 interface SearchFormData {
   city: string;
@@ -6,7 +6,7 @@ interface SearchFormData {
   dateEntry: number;
   dateDeparture: number;
   maxPrice: number;
-};
+}
 
 export interface Place {
   id: number;
@@ -16,9 +16,12 @@ export interface Place {
   remoteness: number;
   bookedDates: number[];
   price: number;
-};
+}
 
-function dateToNumber(id: string): number {
+export let places: Place[];
+export let timeOfFind: number;
+
+export function dateToNumber(id: string): number {
   return Date.parse(new Date(getInputValue(id)).toString());
 }
 
@@ -37,7 +40,8 @@ function searchData(search: SearchFormData): void {
       return response.json();
     }).then(data => {
       console.log(data);
-      renderSearchResultsBlock(data);
+      places = data;
+      renderSearchResultsBlock();
     }).catch(error => {
       renderEmptyOrErrorSearchBlock(error.message);
     });
@@ -46,6 +50,7 @@ function searchData(search: SearchFormData): void {
 export function searchFormData(event: Event): void {
 
   event.preventDefault();
+  timeOfFind = Date.now();
 
   searchData({
     coordinates: getInputValue('coordinates'),

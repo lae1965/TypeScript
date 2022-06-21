@@ -1,5 +1,9 @@
 import { renderBlock } from './lib.js';
-import { Place } from './search-form-data.js'
+import { places } from './search-form-data.js';
+import { FavoriteItem, getFavoriteItems, setFavoriteItems, toggleFavoriteItem } from './favoriteItems.js';
+import { getUserData } from './getUser.js';
+import { renderUserBlock } from './user.js';
+import { bookingRequest } from './bookingRequest.js';
 
 export function renderSearchStubBlock(): void {
   renderBlock(
@@ -25,9 +29,11 @@ export function renderEmptyOrErrorSearchBlock(reasonMessage: string): void {
   );
 }
 
-export function renderSearchResultsBlock(places: Place[]): void {
+export function renderSearchResultsBlock(): void {
   if (!places.length) {
     renderEmptyOrErrorSearchBlock('По Вашему запросу ничего не найдено');
+    localStorage.removeItem('favoriteItems');
+    renderUserBlock(getUserData());
     return;
   }
   let html = `
@@ -47,10 +53,10 @@ export function renderSearchResultsBlock(places: Place[]): void {
 
   places.forEach(place => {
     html += `
-    <li class="result">
+    <li class="result" data-id=${place.id}>
       <div class="result-container">
         <div class="result-img-container">
-          <div class="favorites" data-id=${place.id}></div>
+          <div class="favorites"></div>
           <img class="result-img" src=${place.image} alt="">
         </div>	
         <div class="result-info">
@@ -62,7 +68,7 @@ export function renderSearchResultsBlock(places: Place[]): void {
           <div class="result-info--descr">${place.description}</div>
           <div class="result-info--footer">
             <div>
-              <button>Забронировать</button>
+              <button class="booking">Забронировать</button>
             </div>
           </div>
         </div>
@@ -74,4 +80,24 @@ export function renderSearchResultsBlock(places: Place[]): void {
   html += '</ul>';
 
   renderBlock('search-results-block', html);
+
+  const icons = document.getElementsByClassName('favorites');
+  const favoriteItems = getFavoriteItems();
+  const newFavoriteItems: FavoriteItem[] = [];
+  for (let i = 0; i < icons.length; i++) {
+    icons[i].addEventListener('click', toggleFavoriteItem); 
+    if (favoriteItems == null) continue;
+    const find = favoriteItems.find(el => el.id.toString() === icons[i].getAttribute('data-id'));
+    if (find) {
+      icons[i].classList.add('active');
+      newFavoriteItems.push(find);
+    }
+  }
+  setFavoriteItems(newFavoriteItems);
+  renderUserBlock(getUserData());
+  
+  const booking = document.getElementsByClassName('booking');
+  for (let i = 0; i < booking.length; i++) booking[i].addEventListener('click', bookingRequest);
 }
+
+

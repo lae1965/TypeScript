@@ -1,5 +1,4 @@
 import { renderBlock } from './lib.js';
-import { searchFormData } from './search-form-data.js'
 
 function setLeaderZero(str: string): string {
   return str.length === 2 ? str : `0${str}`;
