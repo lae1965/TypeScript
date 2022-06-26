@@ -4,7 +4,7 @@ import { getUserData } from './getUser.js';
 import { searchResult } from './providersSearch.js';
 
 export interface FavoriteItem {
-  id: number;
+  id: number | string;
   image: string;
   name: string;
 }
@@ -18,8 +18,8 @@ export function getFavoriteItems(): FavoriteItem[] | null {
   return null;
 }
 
-export function setFavoriteItems(favoriteItems: FavoriteItem[]): void { 
-  if(favoriteItems.length) localStorage.setItem('favoriteItems', JSON.stringify(favoriteItems));
+export function setFavoriteItems(favoriteItems: FavoriteItem[]): void {
+  if (favoriteItems.length) localStorage.setItem('favoriteItems', JSON.stringify(favoriteItems));
   else localStorage.removeItem('favoriteItems');
 }
 
@@ -35,9 +35,9 @@ export function toggleFavoriteItem(event: Event) {
       image: find.image,
       name: find.name
     };
-    if (favoriteItems == null) favoriteItems = [{...newitem }];
+    if (favoriteItems == null) favoriteItems = [{ ...newitem }];
     else favoriteItems.push(newitem);
-    
+
     setFavoriteItems(favoriteItems);
   } else {
     const findIndex = favoriteItems.findIndex(el => el.id.toString() === id);

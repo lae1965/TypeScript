@@ -3,7 +3,7 @@ import { FavoriteItem, getFavoriteItems, setFavoriteItems, toggleFavoriteItem } 
 import { getUserData } from './getUser.js';
 import { renderUserBlock } from './user.js';
 import { bookingRequest } from './bookingRequest.js';
-import { Place } from './searchHomyData.js';
+import { SearchResult } from './providersSearch.js';
 
 export function renderSearchStubBlock(): void {
   renderBlock(
@@ -29,8 +29,8 @@ export function renderEmptyOrErrorSearchBlock(reasonMessage: string): void {
   );
 }
 
-export function renderSearchResultsBlock(places: Place[]): void {
-  if (!places.length) {
+export function renderSearchResultsBlock(results: SearchResult[]): void {
+  if (!results.length) {
     renderEmptyOrErrorSearchBlock('По Вашему запросу ничего не найдено');
     localStorage.removeItem('favoriteItems');
     renderUserBlock(getUserData());
@@ -51,21 +51,21 @@ export function renderSearchResultsBlock(places: Place[]): void {
     <ul class="results-list">
   `;
 
-  places.forEach(place => {
+  results.forEach(result => {
     html += `
-    <li class="result" data-id=${place.id}>
+    <li class="result" data-id=${result.uni_id}>
       <div class="result-container">
         <div class="result-img-container">
           <div class="favorites"></div>
-          <img class="result-img" src=${place.image} alt="">
+          <img class="result-img" src=${result.image} alt="">
         </div>	
         <div class="result-info">
           <div class="result-info--header">
-            <p>${place.name}</p>
-            <p class="price">${place.price}&#8381;</p>
+            <p>${result.name}</p>
+            <p class="price">${result.price}&#8381;</p>
           </div>
-          <div class="result-info--map"><i class="map-icon"></i> ${place.remoteness}км от Вас</div>
-          <div class="result-info--descr">${place.description}</div>
+          <div class="result-info--map"><i class="map-icon"></i> ${result.remoteness}км от Вас</div>
+          <div class="result-info--descr">${result.description}</div>
           <div class="result-info--footer">
             <div>
               <button class="booking">Забронировать</button>
@@ -85,7 +85,7 @@ export function renderSearchResultsBlock(places: Place[]): void {
   const favoriteItems = getFavoriteItems();
   const newFavoriteItems: FavoriteItem[] = [];
   for (let i = 0; i < icons.length; i++) {
-    icons[i].addEventListener('click', toggleFavoriteItem); 
+    icons[i].addEventListener('click', toggleFavoriteItem);
     if (favoriteItems == null) continue;
     const find = favoriteItems.find(el => el.id.toString() === icons[i].getAttribute('data-id'));
     if (find) {
@@ -95,7 +95,7 @@ export function renderSearchResultsBlock(places: Place[]): void {
   }
   setFavoriteItems(newFavoriteItems);
   renderUserBlock(getUserData());
-  
+
   const booking = document.getElementsByClassName('booking');
   for (let i = 0; i < booking.length; i++) booking[i].addEventListener('click', bookingRequest);
 }

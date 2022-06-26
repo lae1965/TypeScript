@@ -1,13 +1,14 @@
 import { renderToast } from './lib.js';
 import { renderEmptyOrErrorSearchBlock, renderSearchResultsBlock } from './search-results.js';
-import { Place, searchFormHomyData, searchHomyData } from './searchHomyData.js';
+import { parseSearchHomyResult, Place, searchFormHomyData, searchHomyData } from './searchHomyData.js';
+import { Flat } from './flat-rent-sdk.js';
+import { parseSearchFlatRentResult, searchFlatRentData, searchFormFlatRentData } from './searchFlatRentData.js';
 
 export interface Provider {
   name: string;
   createSearchProviderForm(): SearchForm;
-  find(search: SearchForm): Place[] | Error;
-  book(): void;
-  parseSearchProviderResult(result: Place[]): Place[];
+  find(search: SearchForm): Promise<Place[] | Flat[] | Error>;
+  parseSearchProviderResult(result: Place[] | Flat[]): SearchResult[];
 }
 
 export interface SearchForm {
@@ -18,57 +19,74 @@ export interface SearchForm {
   coordinates?: string;
 }
 
-export let searchResult: Place[] = [];
+export interface SearchResult extends Place {
+  uni_id: string;
+}
+
+export let searchResult: SearchResult[] = [], timeOfSearch: number;
 
 export function providersSearch(event: Event) {
   event.preventDefault();
 
+  timeOfSearch = Date.now();
+
   const homy: HTMLInputElement = document.querySelector('input[value="homy"]');
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const flatRent: HTMLInputElement = document.querySelector('input[value="flat-rent"]');
 
-  const providers: Provider[] = []; 
+  const providers: Provider[] = [];
 
   if (homy.checked) {
     providers.push({
       name: 'Homy',
       createSearchProviderForm: searchFormHomyData,
       find: searchHomyData,
-      book: () => {console.log('Booking in Homy Provider');},
-      parseSearchProviderResult: result => result 
+      parseSearchProviderResult: parseSearchHomyResult
     });
   }
-  /* 
+
   if (flatRent.checked) {
     providers.push({
       name: 'Flat Rent',
-      createSearchProviderForm: () => {console.log('Creating serch form for Flat Rent provider...');},
-      find: () => {console.log('Searching in Flat Rent Provider');},
-      book: () => {console.log('Booking in Flat Rent Provider');},
-      parseSearchProviderResult: () => {console.log('Parsing result of Flat Rent provider...');}
+      createSearchProviderForm: searchFormFlatRentData,
+      find: searchFlatRentData,
+      parseSearchProviderResult: parseSearchFlatRentResult
     });
   }
-  */
 
   if (!providers.length) {
     renderToast(
-      {text: 'Выберите хотя бы одного провайдера', type: 'Error'},
-      {name: 'Good luck!', handler:   null}
+      { text: 'Выберите хотя бы одного провайдера', type: 'Error' },
+      { name: 'Good luck!', handler: null }
     );
     return;
   }
-  
-  providers.forEach(provider => {
-    const form = provider.createSearchProviderForm();
-    const result = provider.find(form);
-    if (result instanceof Error) {
-      renderEmptyOrErrorSearchBlock(`Ошибка провайдера ${provider.name}: ${result.message}`);
-      throw new Error(result.message);
-    } 
-    const parseResult = provider.parseSearchProviderResult(result);
-    searchResult = searchResult.concat(parseResult); 
-    console.log(searchResult);
-  });
 
-  renderSearchResultsBlock(searchResult);
+  providersFilling(providers);
+
+}
+
+async function providersFilling(providers: Provider[]) {
+  let searchRes: SearchResult[] = [];
+  let i = 0;
+
+  while (1) {
+    const parseResult = await providerFilling(providers[i]);
+    searchRes = searchRes.concat(parseResult);
+    i++;
+    if (i === providers.length) {
+      searchResult = [...searchRes];
+      renderSearchResultsBlock(searchResult);
+      break;
+    }
+  }
+}
+
+async function providerFilling(provider: Provider): Promise<SearchResult[]> {
+  const form = provider.createSearchProviderForm();
+  const result = await provider.find(form);
+  if (result instanceof Error) {
+    renderEmptyOrErrorSearchBlock(`Ошибка провайдера ${provider.name}: ${result.message}`);
+    throw new Error(result.message);
+  }
+  return provider.parseSearchProviderResult(result);
 }

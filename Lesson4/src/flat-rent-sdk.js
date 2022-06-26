@@ -46,7 +46,7 @@ export function addDays(date, days) {
   return date
 }
 
-export const backendPort = 3040
+export const backendPort = 3000
 export const localStorageKey = 'flat-rent-db'
 
 export class FlatRentSdk {
@@ -131,6 +131,8 @@ export class FlatRentSdk {
      * @returns {number}
      */
   book(flatId, checkInDate, checkOutDate) {
+    console.log(checkInDate);
+    console.log(checkOutDate);
     return new Promise((resolve, reject) => {
       try {
         const flat = this.database.find((item) => {

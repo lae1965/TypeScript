@@ -1,9 +1,9 @@
 import { getInputValue, dateToNumber } from './util.js';
-import { SearchForm } from './providersSearch.js';
+import { SearchForm, searchResult, SearchResult } from './providersSearch.js';
 import { renderEmptyOrErrorSearchBlock } from './search-results.js';
 
 export interface Place {
-  id: number;
+  id: number | string;
   image: string;
   name: string;
   description: string;
@@ -12,7 +12,7 @@ export interface Place {
   price: number;
 }
 
-export function searchFormHomyData (): SearchForm {
+export function searchFormHomyData(): SearchForm {
   return {
     coordinates: getInputValue('coordinates'),
     city: getInputValue('city'),
@@ -22,29 +22,6 @@ export function searchFormHomyData (): SearchForm {
   };
 }
 
-export function searchHomyData(search: SearchForm): Error | Place[] {
-  let searchData: Place[] | Error;
-  fetch(`http://127.0.0.1:3030/places?coordinates=${search.coordinates}&checkInDate=${search.dateEntry}&checkOutDate=${search.dateDeparture}&maxPrice=${search.maxPrice}`)
-    .then<Place[]>(response => { 
-      if (!response.ok) {
-        renderEmptyOrErrorSearchBlock(`Error: ${response.status}`);
-        searchData = new Error(response.statusText)
-        throw searchData;
-      }
-      return response.json();
-    })
-    .then(result => {
-      searchData = result;
-      return result;
-    })
-    .catch (error => {
-      searchData = error;
-      return error.message;
-    });
-  return searchData;
-}
-
-/*
 export async function searchHomyData(search: SearchForm): Promise<Error | Place[]> {
   try {
     const response = await fetch(`http://127.0.0.1:3030/places?coordinates=${search.coordinates}&checkInDate=${search.dateEntry}&checkOutDate=${search.dateDeparture}&maxPrice=${search.maxPrice}`);
@@ -56,6 +33,14 @@ export async function searchHomyData(search: SearchForm): Promise<Error | Place[
     const data = result;
     return data;
   } catch (error) {
-    return error.message;
+    throw error.message;
   }
-  */
+}
+
+export function parseSearchHomyResult(result: Place[]): SearchResult[] {
+  let parseResult: SearchResult[] = [];
+  result.forEach((resItem, index) => {
+    parseResult.push({ uni_id: `Homy_${resItem.id}`, ...resItem });
+  });
+  return parseResult;
+}

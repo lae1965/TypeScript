@@ -1,43 +1,48 @@
+import { bookingFlatRentRequest } from './bookingFlatRentRequest.js';
+import { bookingHomyRequest } from './bookingHomyRequest.js';
 import { renderToast } from './lib.js';
-import { dateToNumber } from './util.js';
+import { timeOfSearch } from './providersSearch.js';
 import { Place } from './searchHomyData.js';
+import { Flat } from './flat-rent-sdk.js';
 
-export function bookingRequest(event: Event) {
-  /*
-  if (Date.now() - timeOfFind > 30000) {
+export async function bookingRequest(event: Event) {
+  if (Date.now() - timeOfSearch > 30000) {
     renderToast(
-      {text: 'Время ожидания истекло, необходимо обновить запрос', type: 'timeLimitIsEmpty'},
-      {name: 'Ok!', handler: null}
+      { text: 'Время ожидания истекло, необходимо обновить запрос', type: 'timeLimitIsEmpty' },
+      { name: 'Ok!', handler: null }
     )
     return;
   }
-  */
-  fetch(`http://127.0.0.1:3030/places/${(event.target as Element).closest('.result').getAttribute('data-id')}?checkInDate=${dateToNumber('check-in-date')}&checkOutDate=${dateToNumber('check-out-date')}`,
-    {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json;charset=utf-8'
-      }    
-    }
-  ).then<Place>(response => {
-    if (!response.ok) {
+
+  const [provider, id] = (event.target as Element).closest('.result').getAttribute('data-id').split('_');
+  let hotelName: string;
+
+  let result: Place | Flat | Error;
+  switch (provider) {
+    case 'Homy':
+      result = await bookingHomyRequest(id);
+      hotelName = (result as Place).name;
+      break;
+    case 'FlatRent':
+      result = await bookingFlatRentRequest(id);
+      hotelName = (result as Flat).title;
+      break;
+    default:
       renderToast(
-        {text: `Error: ${response.status}`, type: 'Error'},
-        {name: 'Hit any key', handler: null}  
+        { text: `База провайдера "${provider}" отсутствует`, type: 'timeLimitIsEmpty' }
       );
-      throw new Error(response.status.toString());
-    } 
-    return response.json();
-  }).then(data => {
-    console.log(data);
+      return;
+  }
+  console.log(result);
+  if (result instanceof Error) {
     renderToast(
-      {text: `Номер в отеле "${data.name}" успешно забронирован`, type: 'success'},
-      {name: 'Ok!', handler: null}
-    )
-  }).catch(error => {
-    renderToast(
-      {text: error.message, type: 'Error'},
-      {name: 'Нажмите любую клавишу', handler: null}  
+      { text: result.message, type: 'Error' },
+      { name: 'Нажмите любую клавишу', handler: null }
     );
-  });
+  } else {
+    renderToast(
+      { text: `Номер в отеле "${hotelName}" успешно забронирован`, type: 'success' },
+      { name: 'Ok!', handler: null }
+    );
+  }
 }
